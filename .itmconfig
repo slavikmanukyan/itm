@@ -1,0 +1,14 @@
+{
+    "use_ssh": false,
+    "ssh_user": "slavik",
+    "ssh_password": "311095",
+    "ssh_host": "localhost",
+    "ssh_port": 22,
+    "destination": "/var/www/slavik/backup",
+    "ignore": {
+        ".vscode": true,
+        ".git": true,
+        ".gitignore": true,
+        "fs/fs.go": true
+    }
+}

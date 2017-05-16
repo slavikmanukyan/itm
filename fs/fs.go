@@ -6,9 +6,16 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+
+	"github.com/slavikmanukyan/itm/hash"
+	"github.com/slavikmanukyan/itm/itmconfig"
 )
 
+// CopyFile copy file
 func CopyFile(src, dst string) (err error) {
+	src = filepath.Clean(src)
+	dst = filepath.Clean(dst)
+
 	in, err := os.Open(src)
 	if err != nil {
 		return
@@ -50,7 +57,7 @@ func CopyFile(src, dst string) (err error) {
 // CopyDir recursively copies a directory tree, attempting to preserve permissions.
 // Source directory must exist, destination directory must *not* exist.
 // Symlinks are ignored and skipped.
-func CopyDir(src string, dst string) (err error) {
+func CopyDir(src string, dst string, config itmconfig.ITMConfig) (err error) {
 	src = filepath.Clean(src)
 	dst = filepath.Clean(dst)
 
@@ -84,12 +91,15 @@ func CopyDir(src string, dst string) (err error) {
 		srcPath := filepath.Join(src, entry.Name())
 		dstPath := filepath.Join(dst, entry.Name())
 
-		if dst == entry.Name() {
+		a1, _ := filepath.Abs(srcPath)
+		a2, _ := filepath.Abs(dst)
+
+		if (a1 == a2) || (config.IGNORE[a1]) {
 			continue
 		}
 
 		if entry.IsDir() {
-			err = CopyDir(srcPath, dstPath)
+			err = CopyDir(srcPath, dstPath, config)
 			if err != nil {
 				return
 			}
@@ -103,6 +113,7 @@ func CopyDir(src string, dst string) (err error) {
 			if err != nil {
 				return
 			}
+			hash.SaveFileHash(a1, config)
 		}
 	}
 
