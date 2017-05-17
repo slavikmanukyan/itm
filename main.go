@@ -7,6 +7,8 @@ import (
 
 	"fmt"
 
+	"time"
+
 	fsftp "github.com/slavikmanukyan/itm/fs/sftp"
 	"github.com/slavikmanukyan/itm/itmconfig"
 	"github.com/slavikmanukyan/itm/status"
@@ -26,6 +28,7 @@ func main() {
 	// flag.Parse()
 	var configSource string
 	var config itmconfig.ITMConfig
+	timeLayout := "15-01-2006 15:04"
 
 	// if config.USE_SSH {
 	// 	fsftp.InitClient(config)
@@ -46,6 +49,7 @@ func main() {
 		cli.StringFlag{
 			Name:        "config",
 			Destination: &configSource,
+			Usage:       "Config file destination",
 		},
 		cli.StringFlag{
 			Name:  "source, s",
@@ -116,6 +120,27 @@ func main() {
 					return cli.NewExitError("required destination", 1)
 				}
 				Save(config)
+				return nil
+			},
+		},
+		cli.Command{
+			Name: "back",
+			Flags: []cli.Flag{
+				cli.StringFlag{
+					Name:  "time, t",
+					Value: time.Now().Format(timeLayout),
+					Usage: "Backup time (12-01-2016 15:24, 10-10-2016)",
+				},
+			},
+			Action: func(ctx *cli.Context) error {
+				if len(config.DESTINATION) == 0 {
+					return cli.NewExitError("required destination", 1)
+				}
+				t, err := time.Parse(timeLayout, ctx.String("time"))
+				if err != nil {
+					return cli.NewExitError("Wrong time format", 1)
+				}
+				Restore(config, t.UTC().Unix())
 				return nil
 			},
 		},

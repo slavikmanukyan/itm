@@ -116,13 +116,14 @@ func GetRemoteTimestamps(config itmconfig.ITMConfig) []int64 {
 	if err != nil {
 		panic(err)
 	}
-	var timestamps []int64
+	var timestamps int64arr
 	for _, dir := range timeFolders {
 		bTime, err := strconv.ParseInt(dir.Name(), 10, 64)
 		if err == nil {
 			timestamps = append(timestamps, bTime)
 		}
 	}
+	sort.Sort(timestamps)
 	return timestamps
 }
 
