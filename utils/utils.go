@@ -4,6 +4,8 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+
+	"github.com/pkg/sftp"
 )
 
 // ReadLines reads a whole file into memory
@@ -26,6 +28,35 @@ func ReadLines(path string) ([]string, error) {
 // WriteLines writes the lines to the given file.
 func WriteLines(lines []string, path string) error {
 	file, err := os.OpenFile(path, os.O_RDWR|os.O_APPEND|os.O_CREATE, 0660)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	w := bufio.NewWriter(file)
+	for _, line := range lines {
+		fmt.Fprintln(w, line)
+	}
+	return w.Flush()
+}
+
+func ReadLinesRemote(path string, client *sftp.Client) ([]string, error) {
+	file, err := client.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	var lines []string
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		lines = append(lines, scanner.Text())
+	}
+	return lines, scanner.Err()
+}
+
+func WriteLinesRemote(lines []string, path string, client *sftp.Client) error {
+	file, err := client.OpenFile(path, os.O_RDWR|os.O_APPEND|os.O_CREATE)
 	if err != nil {
 		return err
 	}

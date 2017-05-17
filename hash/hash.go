@@ -7,9 +7,13 @@ import (
 
 	"os"
 
-	"time"
-
 	"strconv"
+
+	"io/ioutil"
+
+	"math"
+
+	"sort"
 
 	"github.com/cespare/xxhash"
 	fsftp "github.com/slavikmanukyan/itm/fs/sftp"
@@ -17,13 +21,18 @@ import (
 	"github.com/slavikmanukyan/itm/utils"
 )
 
-func SaveFileHash(file string, config itmconfig.ITMConfig) {
+type int64arr []int64
+
+func (a int64arr) Len() int           { return len(a) }
+func (a int64arr) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a int64arr) Less(i, j int) bool { return a[i] < a[j] }
+
+func SaveFileHash(file string, config itmconfig.ITMConfig, timestamp string) {
 	absFile, _ := filepath.Abs(file)
 	absSource, _ := filepath.Abs(config.SOURCE)
 	relFile, _ := filepath.Rel(absSource, absFile)
 	fileName := strings.Replace(filepath.ToSlash(relFile), "/", "-", -1)
-	dirName := filepath.Join(config.DESTINATION, ".itm/files/"+fileName)
-	now := strconv.FormatInt(time.Now().UTC().Unix(), 10)
+	dirName := filepath.Join(config.DESTINATION, ".itm/files/", timestamp, fileName)
 
 	fileHash := GetFileHash(absFile)
 	fileHashSet := GetFileHashSet(absFile, 2048)
@@ -33,15 +42,15 @@ func SaveFileHash(file string, config itmconfig.ITMConfig) {
 		if err != nil {
 			fsftp.Client.Mkdir(dirName)
 		}
-		fsftp.Client.Mkdir(filepath.Join(dirName, now))
+		utils.WriteLinesRemote([]string{fileHash}, filepath.Join(dirName, "hash.itmmi"), fsftp.Client)
+		utils.WriteLinesRemote(fileHashSet, filepath.Join(dirName, "hashSet.itmi"), fsftp.Client)
 	} else {
 		_, err := os.Stat(dirName)
 		if err != nil {
 			os.Mkdir(dirName, os.ModePerm)
 		}
-		os.Mkdir(filepath.Join(dirName, now), os.ModePerm)
-		utils.WriteLines([]string{fileHash}, filepath.Join(dirName, now, "hash.itmmi"))
-		utils.WriteLines(fileHashSet, filepath.Join(dirName, now, "hashSet.itmi"))
+		utils.WriteLines([]string{fileHash}, filepath.Join(dirName, "hash.itmmi"))
+		utils.WriteLines(fileHashSet, filepath.Join(dirName, "hashSet.itmi"))
 	}
 }
 
@@ -93,4 +102,84 @@ func GetFileHash(file string) string {
 		panic(err)
 	}
 	return strconv.FormatUint(h.Sum64(), 16)
+}
+
+func GetRemoteTimestamps(config itmconfig.ITMConfig) []int64 {
+	var timeFolders []os.FileInfo
+	var err error
+	destination := filepath.Join(config.DESTINATION, ".itm", "files")
+	if config.USE_SSH {
+		timeFolders, err = fsftp.Client.ReadDir(destination)
+	} else {
+		timeFolders, err = ioutil.ReadDir(destination)
+	}
+	if err != nil {
+		panic(err)
+	}
+	var timestamps []int64
+	for _, dir := range timeFolders {
+		bTime, err := strconv.ParseInt(dir.Name(), 10, 64)
+		if err == nil {
+			timestamps = append(timestamps, bTime)
+		}
+	}
+	return timestamps
+}
+
+func GetClosestTime(timestamps int64arr, byTime int64) int64 {
+	sort.Sort(timestamps)
+	if byTime <= timestamps[0] {
+		return timestamps[0]
+	}
+	if byTime >= timestamps[len(timestamps)-1] {
+		return timestamps[len(timestamps)-1]
+	}
+	for i := 0; i < len(timestamps)-1; i++ {
+		if math.Abs(float64(timestamps[i]-byTime)) <= math.Abs(float64(timestamps[i+1]-byTime)) {
+			return timestamps[i]
+		}
+	}
+	return timestamps[len(timestamps)-1]
+}
+
+func GetRemoteHash(file string, config itmconfig.ITMConfig, timestamp string) string {
+	absFile, _ := filepath.Abs(file)
+	absSource, _ := filepath.Abs(config.SOURCE)
+	relFile, _ := filepath.Rel(absSource, absFile)
+	fileName := strings.Replace(filepath.ToSlash(relFile), "/", "-", -1)
+	src := filepath.Join(config.DESTINATION, ".itm", "files", timestamp, fileName, "hash.itmi")
+
+	var hash []string
+	var err error
+
+	if config.USE_SSH {
+		hash, err = utils.ReadLinesRemote(src, fsftp.Client)
+	} else {
+		hash, err = utils.ReadLines(src)
+	}
+	if err != nil {
+		panic(err)
+	}
+	return hash[0]
+}
+
+func GetRemoteHashSet(file string, config itmconfig.ITMConfig, timestamp string) []string {
+	absFile, _ := filepath.Abs(file)
+	absSource, _ := filepath.Abs(config.SOURCE)
+	relFile, _ := filepath.Rel(absSource, absFile)
+	fileName := strings.Replace(filepath.ToSlash(relFile), "/", "-", -1)
+	src := filepath.Join(config.DESTINATION, ".itm", "files", timestamp, fileName, "hashSet.itmi")
+
+	var hashSet []string
+	var err error
+
+	if config.USE_SSH {
+		hashSet, err = utils.ReadLinesRemote(src, fsftp.Client)
+	} else {
+		hashSet, err = utils.ReadLines(src)
+	}
+	if err != nil {
+		panic(err)
+	}
+	return hashSet
 }

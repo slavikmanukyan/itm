@@ -193,7 +193,7 @@ func CopyDirFrom(src, dst string) (err error) {
 	return
 }
 
-func CopyDirTo(src, dst string, config itmconfig.ITMConfig) (err error) {
+func CopyDirTo(src, dst string, config itmconfig.ITMConfig, timestamp string) (err error) {
 	if inited != true {
 		return
 	}
@@ -236,7 +236,7 @@ func CopyDirTo(src, dst string, config itmconfig.ITMConfig) (err error) {
 		}
 
 		if entry.IsDir() {
-			err = CopyDirTo(srcPath, dstPath, config)
+			err = CopyDirTo(srcPath, dstPath, config, timestamp)
 			if err != nil {
 				return
 			}
@@ -250,6 +250,7 @@ func CopyDirTo(src, dst string, config itmconfig.ITMConfig) (err error) {
 			if err != nil {
 				return
 			}
+			// hash.SaveFileHash(a1, config, timestamp)
 		}
 	}
 

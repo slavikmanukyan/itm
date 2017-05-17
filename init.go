@@ -6,6 +6,9 @@ import (
 
 	"os"
 
+	"strconv"
+	"time"
+
 	"github.com/slavikmanukyan/itm/fs"
 	fsftp "github.com/slavikmanukyan/itm/fs/sftp"
 	"github.com/slavikmanukyan/itm/itmconfig"
@@ -27,7 +30,7 @@ func Init(ctx *cli.Context, config itmconfig.ITMConfig) error {
 		}
 		fsftp.Client.Mkdir(filepath.Join(config.DESTINATION, ".itm"))
 		fsftp.Client.Mkdir(filepath.Join(config.DESTINATION, ".itm/files"))
-		err := fsftp.CopyDirTo(source, config.DESTINATION, config)
+		err := fsftp.CopyDirTo(source, config.DESTINATION, config, strconv.FormatInt(time.Now().Unix(), 10))
 		if err != nil {
 			return err
 		}
@@ -35,8 +38,9 @@ func Init(ctx *cli.Context, config itmconfig.ITMConfig) error {
 		if ctx.Bool("f") {
 			os.RemoveAll(filepath.Join(config.DESTINATION, ".itm"))
 		}
-		os.MkdirAll(filepath.Join(config.DESTINATION, ".itm/files"), os.ModePerm)
-		err := fs.CopyDir(source, config.DESTINATION, config)
+		now := strconv.FormatInt(time.Now().Unix(), 10)
+		os.MkdirAll(filepath.Join(config.DESTINATION, ".itm", "files", now), os.ModePerm)
+		err := fs.CopyDir(source, config.DESTINATION, config, now)
 		if err != nil {
 			return err
 		}
