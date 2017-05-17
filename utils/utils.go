@@ -5,7 +5,11 @@ import (
 	"fmt"
 	"os"
 
+	"io/ioutil"
+
 	"github.com/pkg/sftp"
+	fsftp "github.com/slavikmanukyan/itm/fs/sftp"
+	"github.com/slavikmanukyan/itm/itmconfig"
 )
 
 // ReadLines reads a whole file into memory
@@ -76,4 +80,21 @@ func Contains(s []string, e string) bool {
 		}
 	}
 	return false
+}
+
+func CreateRemoteDir(dir string, config itmconfig.ITMConfig) {
+	if config.USE_SSH {
+		fsftp.Client.Mkdir(dir)
+	} else {
+		os.Mkdir(dir, os.ModePerm)
+	}
+}
+
+func WriteRemoteFile(file string, config itmconfig.ITMConfig, data []byte) {
+	if config.USE_SSH {
+		out, _ := fsftp.Client.OpenFile(file, os.O_WRONLY)
+		out.Write(data)
+	} else {
+		ioutil.WriteFile(file, data, 0644)
+	}
 }

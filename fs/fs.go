@@ -163,3 +163,14 @@ func WalkAll(dir string, config itmconfig.ITMConfig) ([]string, error) {
 
 	return files, nil
 }
+
+func ReadFileSlice(file string, n int, size int) []byte {
+	slice := make([]byte, size)
+	in, err := os.Open(file)
+	if err != nil {
+		panic(err)
+	}
+	section := io.NewSectionReader(in, int64(n)*int64(size), int64(size))
+	section.Read(slice)
+	return slice
+}

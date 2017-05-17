@@ -83,7 +83,11 @@ func main() {
 				if len(config.DESTINATION) == 0 {
 					return cli.NewExitError("required destination", 1)
 				}
-				added, deleted, changed := status.GetStatus(config)
+				added, deleted, changed, _ := status.GetStatus(config)
+				if len(added) == 0 && len(changed) == 0 && len(deleted) == 0 {
+					fmt.Println("Everything is up-to-date")
+					return nil
+				}
 				if len(added) > 0 {
 					fmt.Println("\nAdded files: ")
 					for _, file := range added {
@@ -102,6 +106,16 @@ func main() {
 						fmt.Println("              ", file)
 					}
 				}
+				return nil
+			},
+		},
+		cli.Command{
+			Name: "save",
+			Action: func(ctx *cli.Context) error {
+				if len(config.DESTINATION) == 0 {
+					return cli.NewExitError("required destination", 1)
+				}
+				Save(config)
 				return nil
 			},
 		},
