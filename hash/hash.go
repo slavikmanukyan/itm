@@ -42,14 +42,14 @@ func SaveFileHash(file string, config itmconfig.ITMConfig, timestamp string) {
 		if err != nil {
 			fsftp.Client.Mkdir(dirName)
 		}
-		utils.WriteLinesRemote([]string{fileHash}, filepath.Join(dirName, "hash.itmmi"), fsftp.Client)
+		utils.WriteLinesRemote([]string{fileHash, relFile}, filepath.Join(dirName, "hash.itmi"), fsftp.Client)
 		utils.WriteLinesRemote(fileHashSet, filepath.Join(dirName, "hashSet.itmi"), fsftp.Client)
 	} else {
 		_, err := os.Stat(dirName)
 		if err != nil {
 			os.Mkdir(dirName, os.ModePerm)
 		}
-		utils.WriteLines([]string{fileHash}, filepath.Join(dirName, "hash.itmmi"))
+		utils.WriteLines([]string{fileHash, relFile}, filepath.Join(dirName, "hash.itmi"))
 		utils.WriteLines(fileHashSet, filepath.Join(dirName, "hashSet.itmi"))
 	}
 }
@@ -142,7 +142,7 @@ func GetClosestTime(timestamps int64arr, byTime int64) int64 {
 	return timestamps[len(timestamps)-1]
 }
 
-func GetRemoteHash(file string, config itmconfig.ITMConfig, timestamp string) string {
+func GetRemoteHash(file string, config itmconfig.ITMConfig, timestamp string) (string, string) {
 	absFile, _ := filepath.Abs(file)
 	absSource, _ := filepath.Abs(config.SOURCE)
 	relFile, _ := filepath.Rel(absSource, absFile)
@@ -160,7 +160,7 @@ func GetRemoteHash(file string, config itmconfig.ITMConfig, timestamp string) st
 	if err != nil {
 		panic(err)
 	}
-	return hash[0]
+	return hash[0], hash[1]
 }
 
 func GetRemoteHashSet(file string, config itmconfig.ITMConfig, timestamp string) []string {

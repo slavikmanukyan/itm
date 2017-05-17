@@ -5,8 +5,11 @@ import (
 
 	"path/filepath"
 
+	"fmt"
+
 	fsftp "github.com/slavikmanukyan/itm/fs/sftp"
 	"github.com/slavikmanukyan/itm/itmconfig"
+	"github.com/slavikmanukyan/itm/status"
 	"github.com/urfave/cli"
 )
 
@@ -42,7 +45,6 @@ func main() {
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
 			Name:        "config",
-			Value:       ".itmconfig",
 			Destination: &configSource,
 		},
 		cli.StringFlag{
@@ -75,14 +77,45 @@ func main() {
 				return nil
 			},
 		},
+		cli.Command{
+			Name: "status",
+			Action: func(ctx *cli.Context) error {
+				if len(config.DESTINATION) == 0 {
+					return cli.NewExitError("required destination", 1)
+				}
+				added, deleted, changed := status.GetStatus(config)
+				if len(added) > 0 {
+					fmt.Println("\nAdded files: ")
+					for _, file := range added {
+						fmt.Println("            ", file)
+					}
+				}
+				if len(deleted) > 0 {
+					fmt.Println("\nDeleted files: ")
+					for _, file := range deleted {
+						fmt.Println("              ", file)
+					}
+				}
+				if len(changed) > 0 {
+					fmt.Println("\nChanged files: ")
+					for _, file := range changed {
+						fmt.Println("              ", file)
+					}
+				}
+				return nil
+			},
+		},
 	}
 
 	app.Before = func(ctx *cli.Context) error {
-		config = itmconfig.Parse(ctx.String("config"))
+		if configSource == "" {
+			configSource = filepath.Join(ctx.String("s"), ".itmconfig")
+		}
+		config = itmconfig.Parse(configSource)
 		if len(ctx.String("d")) > 0 {
 			config.DESTINATION = ctx.String("d")
 		}
-		config.SOURCE = ctx.String("s")
+		config.SOURCE, _ = filepath.Abs(ctx.String("s"))
 		if config.IGNORE == nil {
 			config.IGNORE = make(map[string]bool)
 		}

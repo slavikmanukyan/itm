@@ -119,3 +119,47 @@ func CopyDir(src string, dst string, config itmconfig.ITMConfig, timestamp strin
 
 	return
 }
+
+func WalkAll(dir string, config itmconfig.ITMConfig) ([]string, error) {
+	dir = filepath.Clean(dir)
+
+	si, err := os.Stat(dir)
+	if err != nil {
+		return nil, err
+	}
+	if !si.IsDir() {
+		return nil, fmt.Errorf("source is not a directory")
+	}
+
+	var files []string
+	entries, err := ioutil.ReadDir(dir)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, entry := range entries {
+		srcPath := filepath.Join(dir, entry.Name())
+
+		a1, _ := filepath.Abs(srcPath)
+
+		if config.IGNORE[a1] {
+			continue
+		}
+
+		if entry.IsDir() {
+			newFiles, err := WalkAll(srcPath, config)
+			if err != nil {
+				return nil, err
+			}
+			files = append(files, newFiles...)
+		} else {
+			// Skip symlinks.
+			if entry.Mode()&os.ModeSymlink != 0 {
+				continue
+			}
+			files = append(files, a1)
+		}
+	}
+
+	return files, nil
+}
