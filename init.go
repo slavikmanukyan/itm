@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 
 	"os"
+	"fmt"
 
 	"strconv"
 	"time"
@@ -24,6 +25,7 @@ func Init(ctx *cli.Context, config itmconfig.ITMConfig) error {
 			return errors.New("Destination alerady inited (use -f to force init)")
 		}
 	}
+	fmt.Println("Starting backup...")
 	if config.USE_SSH {
 		if ctx.Bool("f") {
 			fsftp.Client.RemoveDirectory(filepath.Join(config.DESTINATION, ".itm"))
@@ -49,6 +51,7 @@ func Init(ctx *cli.Context, config itmconfig.ITMConfig) error {
 	if !utils.Contains(destinations, config.DESTINATION) {
 		utils.WriteLines([]string{config.DESTINATION}, filepath.Join(source, ".itm/destinations.itmi"))
 	}
+	fmt.Println("\nBackup completed!")
 
 	return nil
 }

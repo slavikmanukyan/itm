@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"strings"
 
 	"io/ioutil"
 
@@ -97,4 +98,8 @@ func WriteRemoteFile(file string, config itmconfig.ITMConfig, data []byte) {
 	} else {
 		ioutil.WriteFile(file, data, 0644)
 	}
+}
+
+func ClearLine(n int)  {
+	fmt.Print("\r", strings.Repeat(" ", n))
 }

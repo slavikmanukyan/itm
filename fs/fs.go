@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/slavikmanukyan/itm/utils"
 	"github.com/slavikmanukyan/itm/hash"
 	"github.com/slavikmanukyan/itm/itmconfig"
 )
@@ -110,6 +111,8 @@ func CopyDir(src string, dst string, config itmconfig.ITMConfig, timestamp strin
 			}
 
 			err = CopyFile(srcPath, dstPath)
+			utils.ClearLine(80)
+			fmt.Print("\rCopying file:", srcPath)
 			if err != nil {
 				return
 			}
