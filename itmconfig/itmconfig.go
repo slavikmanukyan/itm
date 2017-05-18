@@ -9,16 +9,17 @@ import (
 )
 
 type ITMConfig struct {
-	DESTINATION     string
-	SOURCE          string
-	USE_SSH         bool
-	SSH_USER        string
-	SSH_PASSWORD    string
-	SSH_HOST        string
-	SSH_PORT        int
-	SSH_PRIVATE_KEY string
-	SSH_AUTH_SOCK   bool
-	IGNORE          map[string]bool
+	DESTINATION        string
+	SOURCE             string
+	USE_SSH            bool
+	SSH_USER           string
+	SSH_PASSWORD       string
+	SSH_HOST           string
+	SSH_PORT           int
+	SSH_PRIVATE_KEY    string
+	SSH_KEY_PASSPHRASE string
+	SSH_AUTH_SOCK      bool
+	IGNORE             map[string]bool
 }
 
 func Parse(dst string) ITMConfig {

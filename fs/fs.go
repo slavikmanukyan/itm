@@ -7,9 +7,9 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/slavikmanukyan/itm/utils"
 	"github.com/slavikmanukyan/itm/hash"
 	"github.com/slavikmanukyan/itm/itmconfig"
+	"github.com/slavikmanukyan/itm/utils"
 )
 
 // CopyFile copy file
@@ -112,7 +112,7 @@ func CopyDir(src string, dst string, config itmconfig.ITMConfig, timestamp strin
 
 			err = CopyFile(srcPath, dstPath)
 			utils.ClearLine(80)
-			fmt.Print("\rCopying file:", srcPath)
+			fmt.Print("\rCopying file: ", srcPath)
 			if err != nil {
 				return
 			}
@@ -174,6 +174,6 @@ func ReadFileSlice(file string, n int, size int) []byte {
 		panic(err)
 	}
 	section := io.NewSectionReader(in, int64(n)*int64(size), int64(size))
-	section.Read(slice)
-	return slice
+	count, _ := section.Read(slice)
+	return slice[:count]
 }

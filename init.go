@@ -4,14 +4,15 @@ import (
 	"errors"
 	"path/filepath"
 
-	"os"
 	"fmt"
+	"os"
 
 	"strconv"
 	"time"
 
 	"github.com/slavikmanukyan/itm/fs"
 	fsftp "github.com/slavikmanukyan/itm/fs/sftp"
+	"github.com/slavikmanukyan/itm/hash"
 	"github.com/slavikmanukyan/itm/itmconfig"
 	"github.com/slavikmanukyan/itm/utils"
 	"github.com/urfave/cli"
@@ -26,13 +27,29 @@ func Init(ctx *cli.Context, config itmconfig.ITMConfig) error {
 		}
 	}
 	fmt.Println("Starting backup...")
+	timestamp := strconv.FormatInt(time.Now().Unix(), 10)
+	now := strconv.FormatInt(time.Now().Unix(), 10)
 	if config.USE_SSH {
+		_, err := fsftp.Client.Stat(config.DESTINATION)
+		if err != nil {
+			fsftp.Client.Mkdir(config.DESTINATION)
+		}
 		if ctx.Bool("f") {
 			fsftp.Client.RemoveDirectory(filepath.Join(config.DESTINATION, ".itm"))
 		}
+
 		fsftp.Client.Mkdir(filepath.Join(config.DESTINATION, ".itm"))
 		fsftp.Client.Mkdir(filepath.Join(config.DESTINATION, ".itm/files"))
-		err := fsftp.CopyDirTo(source, config.DESTINATION, config, strconv.FormatInt(time.Now().Unix(), 10))
+		fsftp.Client.Mkdir(filepath.Join(config.DESTINATION, ".itm", "files", now))
+
+		err = fsftp.CopyDirTo(source, config.DESTINATION, config, func(file string) {
+			utils.ClearLine(80)
+			fmt.Print("\rCopying file: ", file)
+			if err != nil {
+				return
+			}
+			hash.SaveFileHash(file, config, timestamp)
+		})
 		if err != nil {
 			return err
 		}
@@ -40,7 +57,7 @@ func Init(ctx *cli.Context, config itmconfig.ITMConfig) error {
 		if ctx.Bool("f") {
 			os.RemoveAll(filepath.Join(config.DESTINATION, ".itm"))
 		}
-		now := strconv.FormatInt(time.Now().Unix(), 10)
+
 		os.MkdirAll(filepath.Join(config.DESTINATION, ".itm", "files", now), os.ModePerm)
 		err := fs.CopyDir(source, config.DESTINATION, config, now)
 		if err != nil {

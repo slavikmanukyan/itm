@@ -93,13 +93,13 @@ func CreateRemoteDir(dir string, config itmconfig.ITMConfig) {
 
 func WriteRemoteFile(file string, config itmconfig.ITMConfig, data []byte) {
 	if config.USE_SSH {
-		out, _ := fsftp.Client.OpenFile(file, os.O_WRONLY)
+		out, _ := fsftp.Client.Create(file)
 		out.Write(data)
 	} else {
 		ioutil.WriteFile(file, data, 0644)
 	}
 }
 
-func ClearLine(n int)  {
+func ClearLine(n int) {
 	fmt.Print("\r", strings.Repeat(" ", n))
 }

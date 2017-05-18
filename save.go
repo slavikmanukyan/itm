@@ -36,6 +36,7 @@ func Save(config itmconfig.ITMConfig) {
 		hash.SaveFileHash(filepath.Join(config.SOURCE, file), config, timestamp)
 	}
 
+	fmt.Println("Calculating difference...")
 	for _, file := range changed {
 		changedSlices := make(map[string][]byte)
 

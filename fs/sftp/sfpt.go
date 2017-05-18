@@ -9,11 +9,14 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/ScaleFT/sshkeys"
 	"github.com/pkg/sftp"
 	"github.com/slavikmanukyan/itm/itmconfig"
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/crypto/ssh/agent"
 )
+
+type SaveFunc func(file string)
 
 var client *sftp.Client
 var connection *ssh.Client
@@ -21,8 +24,32 @@ var inited = false
 
 var Client *sftp.Client
 
+func PublicKeyFile(file string, pass string) ssh.AuthMethod {
+	var key ssh.Signer
+	var err error
+
+	buffer, err := ioutil.ReadFile(file)
+	if err != nil {
+		panic(err)
+	}
+
+	if pass != "" {
+		key, err = sshkeys.ParseEncryptedPrivateKey(buffer, []byte(pass))
+	} else {
+		key, err = ssh.ParsePrivateKey(buffer)
+	}
+	if err != nil {
+		panic(err)
+	}
+	return ssh.PublicKeys(key)
+}
+
 func InitClient(config itmconfig.ITMConfig) {
 	var auths []ssh.AuthMethod
+
+	if config.SSH_PRIVATE_KEY != "" {
+		auths = append(auths, PublicKeyFile(config.SSH_PRIVATE_KEY, config.SSH_KEY_PASSPHRASE))
+	}
 
 	if config.SSH_AUTH_SOCK == true {
 		if aconn, err := net.Dial("unix", os.Getenv("SSH_AUTH_SOCK")); err == nil {
@@ -193,7 +220,7 @@ func CopyDirFrom(src, dst string) (err error) {
 	return
 }
 
-func CopyDirTo(src, dst string, config itmconfig.ITMConfig, timestamp string) (err error) {
+func CopyDirTo(src, dst string, config itmconfig.ITMConfig, saveCallback SaveFunc) (err error) {
 	if inited != true {
 		return
 	}
@@ -208,18 +235,7 @@ func CopyDirTo(src, dst string, config itmconfig.ITMConfig, timestamp string) (e
 		return fmt.Errorf("source is not a directory")
 	}
 
-	// _, err = os.Stat(dst)
-	// if err != nil && !os.IsNotExist(err) {
-	// 	return
-	// }
-	// if err == nil {
-	// 	return fmt.Errorf("destination already exists")
-	// }
-	_ = client.RemoveDirectory(dst)
-	err = client.Mkdir(dst)
-	if err != nil {
-		return
-	}
+	client.Mkdir(dst)
 
 	entries, err := ioutil.ReadDir(src)
 	if err != nil {
@@ -236,7 +252,7 @@ func CopyDirTo(src, dst string, config itmconfig.ITMConfig, timestamp string) (e
 		}
 
 		if entry.IsDir() {
-			err = CopyDirTo(srcPath, dstPath, config, timestamp)
+			err = CopyDirTo(srcPath, dstPath, config, saveCallback)
 			if err != nil {
 				return
 			}
@@ -250,7 +266,7 @@ func CopyDirTo(src, dst string, config itmconfig.ITMConfig, timestamp string) (e
 			if err != nil {
 				return
 			}
-			// hash.SaveFileHash(a1, config, timestamp)
+			saveCallback(srcPath)
 		}
 	}
 
