@@ -169,7 +169,7 @@ func CopyFileTo(src, dst string) (err error) {
 	return
 }
 
-func CopyDirFrom(src, dst string) (err error) {
+func CopyDirFrom(src, dst string, config itmconfig.ITMConfig) (err error) {
 	if inited != true {
 		return
 	}
@@ -197,10 +197,14 @@ func CopyDirFrom(src, dst string) (err error) {
 	for _, entry := range entries {
 		srcPath := filepath.Join(src, entry.Name())
 		dstPath := filepath.Join(dst, entry.Name())
-		fmt.Println(entry.Name())
+
+		a1, _ := filepath.Abs(srcPath)
+		if config.IGNORE[a1] {
+			continue
+		}
 
 		if entry.IsDir() {
-			err = CopyDirFrom(srcPath, dstPath)
+			err = CopyDirFrom(srcPath, dstPath, config)
 			if err != nil {
 				return
 			}

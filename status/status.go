@@ -15,10 +15,16 @@ import (
 	"github.com/slavikmanukyan/itm/utils"
 )
 
-func GetStatus(config itmconfig.ITMConfig) (added []string, deleted []string, changed []string, rest []string) {
+func GetStatus(config itmconfig.ITMConfig, statusTime int64) (added []string, deleted []string, changed []string, rest []string) {
 	currentHashes := GetCurrentHashes(config)
-	timestamps := hash.GetRemoteTimestamps(config)
-	last := hash.GetClosestTime(timestamps, time.Now().UTC().Unix())
+	var last int64
+
+	if statusTime == 0 {
+		timestamps := hash.GetRemoteTimestamps(config)
+		last, _ = hash.GetClosestTime(timestamps, time.Now().UTC().Unix())
+	} else {
+		last = statusTime
+	}
 
 	remoteHashes := GetRemoteHashes(config, strconv.FormatInt(last, 10))
 

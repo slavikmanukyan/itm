@@ -19,14 +19,14 @@ import (
 )
 
 func Save(config itmconfig.ITMConfig) {
-	added, deleted, changed, rest := status.GetStatus(config)
+	added, deleted, changed, rest := status.GetStatus(config, 0)
 	if len(added) == 0 && len(changed) == 0 && len(deleted) == 0 {
 		fmt.Println("Everything is up-to-date")
 		return
 	}
 
 	timestamps := hash.GetRemoteTimestamps(config)
-	last := hash.GetClosestTime(timestamps, time.Now().UTC().Unix())
+	last, _ := hash.GetClosestTime(timestamps, time.Now().UTC().Unix())
 
 	timestamp := strconv.FormatInt(time.Now().UTC().Unix(), 10)
 	dirName := filepath.Join(config.DESTINATION, ".itm", "files", timestamp)

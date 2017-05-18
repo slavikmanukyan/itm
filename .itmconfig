@@ -1,10 +1,10 @@
 {
-    "use_ssh": true,
-    "ssh_user": "slavikmanukyan",
-    "ssh_host": "104.198.146.168",
+    "use_ssh": false,
+    "ssh_user": "slavik",
+    "ssh_password": "311095",
+    "ssh_host": "localhost",
     "ssh_port": 22,
-    "ssh_private_key": "/Users/slavikmanukyan/.ssh/id_rsa",
-    "destination": "/home/slavikmanukyan/backup",
+    "destination": "/var/www/slavik/backup",
     "ignore": {
         ".vscode": true,
         ".git": true,

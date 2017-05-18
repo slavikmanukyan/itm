@@ -20,30 +20,11 @@ func logError(err string) {
 }
 
 func main() {
-	// source := flag.String("source", "", "source directory")
-	// destination := flag.String("destination", "", "backup destination")
-	// configSource := flag.String("config", ".itmconfig", "Config file destination")
-	// // recover = := flag.Bool("recover", false, "recover files")
-
-	// flag.Parse()
 	var configSource string
 	var config itmconfig.ITMConfig
 	timeLayout := "15-01-2006 15:04"
+	timeLayout2 := "15-01-2006"
 
-	// if config.USE_SSH {
-	// 	fsftp.InitClient(config)
-	// 	err := fsftp.CopyFileFrom("/slavik/.gitignore", ".gitignore1")
-	// 	fmt.Println(err)
-	// }
-
-	// if (*source != "" && *destination == "") || (*source == "" && *destination != "") {
-	// 	logError("Wrong args")
-	// 	return
-	// }
-
-	// if *destination != "" {
-	// 	fs.CopyDir(*source, *destination)
-	// }
 	app := cli.NewApp()
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
@@ -87,7 +68,7 @@ func main() {
 				if len(config.DESTINATION) == 0 {
 					return cli.NewExitError("required destination", 1)
 				}
-				added, deleted, changed, _ := status.GetStatus(config)
+				added, deleted, changed, _ := status.GetStatus(config, 0)
 				if len(added) == 0 && len(changed) == 0 && len(deleted) == 0 {
 					fmt.Println("Everything is up-to-date")
 					return nil
@@ -138,7 +119,10 @@ func main() {
 				}
 				t, err := time.Parse(timeLayout, ctx.String("time"))
 				if err != nil {
-					return cli.NewExitError("Wrong time format", 1)
+					t, err = time.Parse(timeLayout2, ctx.String("time"))
+					if err != nil {
+						return cli.NewExitError("Wrong time format", 1)
+					}
 				}
 				Restore(config, t.UTC().Unix())
 				return nil

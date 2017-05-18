@@ -127,20 +127,30 @@ func GetRemoteTimestamps(config itmconfig.ITMConfig) []int64 {
 	return timestamps
 }
 
-func GetClosestTime(timestamps int64arr, byTime int64) int64 {
+func GetClosestTime(timestamps int64arr, byTime int64) (int64, int) {
 	sort.Sort(timestamps)
 	if byTime <= timestamps[0] {
-		return timestamps[0]
+		return timestamps[0], 0
 	}
 	if byTime >= timestamps[len(timestamps)-1] {
-		return timestamps[len(timestamps)-1]
+		return timestamps[len(timestamps)-1], len(timestamps) - 1
 	}
 	for i := 0; i < len(timestamps)-1; i++ {
 		if math.Abs(float64(timestamps[i]-byTime)) <= math.Abs(float64(timestamps[i+1]-byTime)) {
-			return timestamps[i]
+			return timestamps[i], i
 		}
 	}
-	return timestamps[len(timestamps)-1]
+	return timestamps[len(timestamps)-1], len(timestamps) - 1
+}
+
+func GetFileMetaDetination(file string, config itmconfig.ITMConfig, timestamp string) string {
+	absFile, _ := filepath.Abs(file)
+	absSource, _ := filepath.Abs(config.SOURCE)
+	relFile, _ := filepath.Rel(absSource, absFile)
+	fileName := strings.Replace(filepath.ToSlash(relFile), "/", "-", -1)
+	src := filepath.Join(config.DESTINATION, ".itm", "files", timestamp, fileName)
+
+	return src
 }
 
 func GetRemoteHash(file string, config itmconfig.ITMConfig, timestamp string) (string, string) {
