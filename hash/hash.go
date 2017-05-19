@@ -143,7 +143,7 @@ func GetClosestTime(timestamps int64arr, byTime int64) (int64, int) {
 	return timestamps[len(timestamps)-1], len(timestamps) - 1
 }
 
-func GetFileMetaDetination(file string, config itmconfig.ITMConfig, timestamp string) string {
+func GetFileMetaDestination(file string, config itmconfig.ITMConfig, timestamp string) string {
 	absFile, _ := filepath.Abs(file)
 	absSource, _ := filepath.Abs(config.SOURCE)
 	relFile, _ := filepath.Rel(absSource, absFile)

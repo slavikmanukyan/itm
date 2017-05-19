@@ -38,14 +38,14 @@ func Save(config itmconfig.ITMConfig) {
 
 	fmt.Println("Calculating difference...")
 	for _, file := range changed {
-		changedSlices := make(map[string][]byte)
+		changedSlices := make(map[int][]byte)
 
 		hashSet1 := hash.GetFileHashSet(filepath.Join(config.SOURCE, file), 2048)
 		hashSet2 := hash.GetRemoteHashSet(file, config, strconv.FormatInt(last, 10))
 		for i, hash := range hashSet1 {
 			if hash != hashSet2[i] {
 				slice := fs.ReadFileSlice(filepath.Join(config.SOURCE, file), i, 2048)
-				changedSlices[hash] = slice
+				changedSlices[i] = slice
 			}
 		}
 
@@ -57,7 +57,7 @@ func Save(config itmconfig.ITMConfig) {
 
 		utils.CreateRemoteDir(dirName, config)
 		for hash, data := range changedSlices {
-			utils.WriteRemoteFile(filepath.Join(dirName, hash), config, data)
+			utils.WriteRemoteFile(filepath.Join(dirName, strconv.Itoa(hash)), config, data)
 		}
 	}
 

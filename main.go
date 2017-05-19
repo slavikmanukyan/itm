@@ -23,10 +23,14 @@ func logError(err string) {
 func main() {
 	var configSource string
 	var config itmconfig.ITMConfig
-	timeLayout := "15-01-2006 15:04"
-	timeLayout2 := "15-01-2006"
+	timeLayout := "02-01-2006 15:04"
+	timeLayout2 := "02-01-2006"
 
 	app := cli.NewApp()
+
+	app.Name = "itm"
+	app.Usage = "Incremental Time Machine - incrementally backing up data"
+	app.Version = "1.0.0"
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
 			Name:        "config",
@@ -65,11 +69,29 @@ func main() {
 		},
 		cli.Command{
 			Name: "status",
+			Flags: []cli.Flag{
+				cli.StringFlag{
+					Name:  "time, t",
+					Usage: "Diff time (12-01-2016 15:24, 10-10-2016)",
+				},
+			},
 			Action: func(ctx *cli.Context) error {
 				if len(config.DESTINATION) == 0 {
 					return cli.NewExitError("required destination", 1)
 				}
-				added, deleted, changed, _ := status.GetStatus(config, 0)
+				var timestamp int64
+				timestamp = 0
+				if ctx.String("time") != "" {
+					t, err := time.Parse(timeLayout, ctx.String("time"))
+					if err != nil {
+						t, err = time.Parse(timeLayout2, ctx.String("time"))
+						if err != nil {
+							return cli.NewExitError("Wrong time format", 1)
+						}
+					}
+					timestamp = t.UTC().Unix()
+				}
+				added, deleted, changed, _ := status.GetStatus(config, timestamp)
 				if len(added) == 0 && len(changed) == 0 && len(deleted) == 0 {
 					fmt.Println("Everything is up-to-date")
 					return nil
@@ -106,7 +128,7 @@ func main() {
 			},
 		},
 		cli.Command{
-			Name: "back",
+			Name: "backup",
 			Flags: []cli.Flag{
 				cli.StringFlag{
 					Name:  "time, t",
@@ -132,6 +154,19 @@ func main() {
 	}
 
 	app.Before = func(ctx *cli.Context) error {
+		if (ctx.NArg() == 0) || ctx.Args().Get(0) == "help" || ctx.Args().Get(0) == "h" {
+			return nil
+		}
+		t := false
+		for _, c := range ctx.App.Commands {
+			if c.HasName(ctx.Args().Get(0)) {
+				t = true
+				break
+			}
+		}
+		if !t {
+			return nil
+		}
 		if configSource == "" {
 			configSource = filepath.Join(ctx.String("s"), ".itmconfig")
 		}
@@ -146,9 +181,12 @@ func main() {
 
 		tmpMap := make(map[string]bool)
 		config.IGNORE[".itm"] = true
+		config.IGNORE[configSource] = true
 		for key, value := range config.IGNORE {
-			abs, _ := filepath.Abs(filepath.Join(config.SOURCE, key))
-			tmpMap[abs] = value
+			abs, err := filepath.Abs(filepath.Join(config.SOURCE, key))
+			if err == nil {
+				tmpMap[abs] = value
+			}
 		}
 		config.IGNORE = tmpMap
 		_, err := ts.GetSize()

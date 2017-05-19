@@ -181,3 +181,31 @@ func ReadFileSlice(file string, n int, size int) []byte {
 	count, _ := section.Read(slice)
 	return slice[:count]
 }
+
+func WriteFileSlice(file string, index int, size int, data []byte, count int) {
+	in, err := os.OpenFile(file, os.O_RDWR, 0644)
+
+	if err == nil {
+		defer in.Close()
+		offset := int64(index) * int64(size)
+		in.WriteAt(data, offset)
+	}
+}
+
+func RemoveEmptyDirs(dir string, config itmconfig.ITMConfig) {
+	var dirs []string
+
+	filepath.Walk(dir, func(file string, info os.FileInfo, err error) error {
+		if info.IsDir() {
+			dirs = append(dirs, file)
+		}
+		return nil
+	})
+
+	for file := range utils.ReverseChan(dirs) {
+		entries, _ := ioutil.ReadDir(file)
+		if len(entries) == 0 {
+			os.RemoveAll(file)
+		}
+	}
+}

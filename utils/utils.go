@@ -101,8 +101,49 @@ func WriteRemoteFile(file string, config itmconfig.ITMConfig, data []byte) {
 	}
 }
 
+func ReadRemoteFile(file string, config itmconfig.ITMConfig) ([]byte, int) {
+	data := make([]byte, 2048)
+	var n int
+	if config.USE_SSH {
+		in, err := fsftp.Client.Open(file)
+		if err == nil {
+			defer in.Close()
+			n, err = in.Read(data)
+		}
+	} else {
+		in, err := os.Open(file)
+		if err == nil {
+			defer in.Close()
+			n, _ = in.Read(data)
+		}
+	}
+	return data[:n], n
+}
+
+func ExistsRemoteFile(file string, config itmconfig.ITMConfig) bool {
+	var err error
+
+	if config.USE_SSH {
+		_, err = fsftp.Client.Stat(file)
+	} else {
+		_, err = os.Stat(file)
+	}
+	return err == nil
+}
+
 func ClearLine() {
 	size, _ := ts.GetSize()
 	n := size.Col()
 	fmt.Print("\r", strings.Repeat(" ", n), "\r")
+}
+
+func ReverseChan(lst []string) chan string {
+	ret := make(chan string)
+	go func() {
+		for i, _ := range lst {
+			ret <- lst[len(lst)-1-i]
+		}
+		close(ret)
+	}()
+	return ret
 }

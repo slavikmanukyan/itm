@@ -169,7 +169,7 @@ func CopyFileTo(src, dst string) (err error) {
 	return
 }
 
-func CopyDirFrom(src, dst string, config itmconfig.ITMConfig) (err error) {
+func CopyDirFrom(src, dst string, config itmconfig.ITMConfig, saveCallback SaveFunc) (err error) {
 	if inited != true {
 		return
 	}
@@ -204,7 +204,7 @@ func CopyDirFrom(src, dst string, config itmconfig.ITMConfig) (err error) {
 		}
 
 		if entry.IsDir() {
-			err = CopyDirFrom(srcPath, dstPath, config)
+			err = CopyDirFrom(srcPath, dstPath, config, saveCallback)
 			if err != nil {
 				return
 			}
@@ -214,6 +214,7 @@ func CopyDirFrom(src, dst string, config itmconfig.ITMConfig) (err error) {
 				continue
 			}
 
+			saveCallback(srcPath)
 			err = CopyFileFrom(srcPath, dstPath)
 			if err != nil {
 				return
@@ -275,4 +276,24 @@ func CopyDirTo(src, dst string, config itmconfig.ITMConfig, saveCallback SaveFun
 	}
 
 	return
+}
+
+func RemoveDirectory(dir string) error {
+	walker := client.Walk(dir)
+	var dirs []string
+
+	for walker.Step() {
+		file := walker.Path()
+		if !walker.Stat().IsDir() {
+			client.Remove(file)
+		} else {
+			dirs = append(dirs, file)
+		}
+	}
+
+	for i := len(dirs) - 1; i >= 0; i-- {
+		file := dirs[i]
+		client.RemoveDirectory(file)
+	}
+	return nil
 }

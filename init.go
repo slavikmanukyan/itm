@@ -35,7 +35,7 @@ func Init(ctx *cli.Context, config itmconfig.ITMConfig) error {
 			fsftp.Client.Mkdir(config.DESTINATION)
 		}
 		if ctx.Bool("f") {
-			fsftp.Client.RemoveDirectory(filepath.Join(config.DESTINATION, ".itm"))
+			fsftp.RemoveDirectory(filepath.Join(config.DESTINATION, ".itm"))
 		}
 
 		fsftp.Client.Mkdir(filepath.Join(config.DESTINATION, ".itm"))
