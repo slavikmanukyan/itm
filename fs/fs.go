@@ -112,12 +112,14 @@ func CopyDir(src string, dst string, config itmconfig.ITMConfig, timestamp strin
 
 			err = CopyFile(srcPath, dstPath)
 			if timestamp != "" {
-			utils.ClearLine(80)
-			fmt.Print("\rCopying file: ", srcPath)
-			if err != nil {
-				return
-			}
-			hash.SaveFileHash(a1, config, timestamp)
+				if config.IS_TERMINAL {
+					utils.ClearLine()
+				}
+				fmt.Print("Copying file: ", srcPath)
+				if err != nil {
+					return
+				}
+				hash.SaveFileHash(a1, config, timestamp)
 			}
 		}
 	}

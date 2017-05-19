@@ -9,6 +9,7 @@ import (
 
 	"time"
 
+	"github.com/olekukonko/ts"
 	fsftp "github.com/slavikmanukyan/itm/fs/sftp"
 	"github.com/slavikmanukyan/itm/itmconfig"
 	"github.com/slavikmanukyan/itm/status"
@@ -150,6 +151,12 @@ func main() {
 			tmpMap[abs] = value
 		}
 		config.IGNORE = tmpMap
+		_, err := ts.GetSize()
+		if err != nil {
+			config.IS_TERMINAL = false
+		} else {
+			config.IS_TERMINAL = true
+		}
 
 		if config.USE_SSH {
 			fsftp.InitClient(config)

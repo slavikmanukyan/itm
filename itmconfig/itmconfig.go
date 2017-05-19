@@ -20,6 +20,7 @@ type ITMConfig struct {
 	SSH_KEY_PASSPHRASE string
 	SSH_AUTH_SOCK      bool
 	IGNORE             map[string]bool
+	IS_TERMINAL        bool
 }
 
 func Parse(dst string) ITMConfig {

@@ -8,6 +8,7 @@ import (
 
 	"io/ioutil"
 
+	"github.com/olekukonko/ts"
 	"github.com/pkg/sftp"
 	fsftp "github.com/slavikmanukyan/itm/fs/sftp"
 	"github.com/slavikmanukyan/itm/itmconfig"
@@ -100,6 +101,8 @@ func WriteRemoteFile(file string, config itmconfig.ITMConfig, data []byte) {
 	}
 }
 
-func ClearLine(n int) {
-	fmt.Print("\r", strings.Repeat(" ", n))
+func ClearLine() {
+	size, _ := ts.GetSize()
+	n := size.Col()
+	fmt.Print("\r", strings.Repeat(" ", n), "\r")
 }

@@ -43,11 +43,10 @@ func Init(ctx *cli.Context, config itmconfig.ITMConfig) error {
 		fsftp.Client.Mkdir(filepath.Join(config.DESTINATION, ".itm", "files", now))
 
 		err = fsftp.CopyDirTo(source, config.DESTINATION, config, func(file string) {
-			utils.ClearLine(80)
-			fmt.Print("\rCopying file: ", file)
-			if err != nil {
-				return
+			if config.IS_TERMINAL {
+				utils.ClearLine()
 			}
+			fmt.Print("Copying file: ", file)
 			hash.SaveFileHash(file, config, timestamp)
 		})
 		if err != nil {
